@@ -16,6 +16,7 @@ namespace GUI {
   extern CAxisAngle lastKnownAngularVelocity;
 
   extern double desiredTime;
+  extern bool phazonBeam;
 
   void drawPlayerMenu();
   void savePos();

@@ -6,6 +6,15 @@
 #include "imgui.h"
 #include "logger/Logger.hpp"
 
+#define BITFIELD_CHECKBOX(label, bf, ...)                                                                              \
+  {                                                                                                                    \
+    bool b = (bf);                                                                                                     \
+    if (ImGui::Checkbox(label, &b)) {                                                                                  \
+      (bf) = b;                                                                                                        \
+      __VA_ARGS__                                                                                                      \
+    }                                                                                                                  \
+  }
+
 static constexpr CPlayerStateMP1::EItemType GeneralItems[] = {
     CPlayerStateMP1::EItemType::EnergyTanks, CPlayerStateMP1::EItemType::CombatVisor, CPlayerStateMP1::EItemType::ScanVisor,
     CPlayerStateMP1::EItemType::ThermalVisor, CPlayerStateMP1::EItemType::XRayVisor, CPlayerStateMP1::EItemType::GrappleBeam,
@@ -86,6 +95,10 @@ static constexpr SItemAmt AnyPercentItems[] = {
 };
 
 namespace GUI {
+  bool phazonBeam = false;
+  uint64_t applyGunFlags = 0;
+  uint64_t gunFlags = 0;
+
   void RenderItemType(CPlayerStateMP1 *playerState, CPlayerStateMP1::EItemType itemType);
   const char *ItemTypeToName(CPlayerStateMP1::EItemType type);
   static inline void RenderItemsDualColumn(CPlayerStateMP1 *playerState, const CPlayerStateMP1::EItemType *items, int start, int end);
@@ -315,6 +328,7 @@ namespace GUI {
   }
 
   void RenderItemsDualColumn(CPlayerStateMP1 *playerState, const CPlayerStateMP1::EItemType *items, int start, int end) {
+    bool weaponsTab = strcmp(ItemTypeToName(items[0]), "Missiles") == 0;
     ImGui::BeginGroup();
     // Render left group
     for (int i = start; i < end; i += 2) {
@@ -326,6 +340,9 @@ namespace GUI {
     // Render right group
     for (int i = start + 1; i < end; i += 2) {
       RenderItemType(playerState, items[i]);
+    }
+    if(weaponsTab) {
+      BITFIELD_CHECKBOX("Phazon Beam", phazonBeam)
     }
     ImGui::EndGroup();
   }

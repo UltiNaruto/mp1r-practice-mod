@@ -55,6 +55,8 @@ HOOK_DEFINE_INLINE(CheckFloatVar) {
   }
 };
 
+static bool wasUsingPhazonBeam = false;
+
 HOOK_DEFINE_TRAMPOLINE(CPlayerMP1_ProcessInput) {
   static void Callback(CPlayerMP1 *thiz, const CFinalInput &input, CStateManager &stateManager) {
     mostRecentStateManager = &stateManager;
@@ -160,6 +162,41 @@ HOOK_DEFINE_TRAMPOLINE(CPlayerMP1_ProcessInput) {
     if (PATCH_CONFIG.invulnerable) {
       int etanks = CStateManagerGameLogicMP1::PlayerState()->GetItemCapacity(CPlayerStateMP1::EItemType::EnergyTanks);
       thiz->HealthInfo(stateManager).heatlh = (float)etanks * 100.0f + 99.0f;
+    }
+
+    // Handle phazon beam
+    auto cplayergun = thiz->GetPlayerGun();
+    if (cplayergun == nullptr) return;
+
+    uint64_t flags = thiz->GetPlayerGun()->GetFlags();
+    uint64_t new_flags = flags;
+    
+    // bit 24 draw holster
+    // bit 26 in phazon pool
+    // bit 27 phazon beam
+
+    if (GUI::phazonBeam) {
+      if (wasUsingPhazonBeam) {
+        if (!(new_flags & (1 << 26)))
+        {
+          wasUsingPhazonBeam = false;
+        }
+      }
+
+      if (!wasUsingPhazonBeam) {
+        *(&new_flags) |= (1 << 25);
+        *(&new_flags) |= (1 << 26);
+        wasUsingPhazonBeam = true;
+      }      
+    } else {
+      if (wasUsingPhazonBeam) {
+        *(&new_flags) &= ~(1 << 25);
+        wasUsingPhazonBeam = false;
+      }
+    }
+
+    if (flags != new_flags) {
+      thiz->GetPlayerGun()->SetFlags(new_flags);
     }
   }
 };
